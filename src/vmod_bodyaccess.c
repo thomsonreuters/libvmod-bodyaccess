@@ -101,8 +101,10 @@ vmod_req_body(VRT_CTX)
 {
 	struct vsb *vsb;
 	char *s;
+	int l;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(ctx->req, REQ_MAGIC);
 	if (ctx->req->req_body_status != REQ_BODY_CACHED) {
 		VSLb(ctx->vsl, SLT_VCL_Error,
 		   "Unbuffered req.body");
@@ -116,7 +118,14 @@ vmod_req_body(VRT_CTX)
 	}
 
 	vsb = VSB_new_auto();
-	VRB_Blob(ctx, vsb);
+	l = VRB_Iterate(ctx->req, IterCopyReqBody, (void*)vsb);
+	VSB_finish(vsb);
+	if (l < 0) {
+		VSB_delete(vsb);
+		VSLb(ctx->vsl, SLT_VCL_Error,
+		    "Iteration on req.body didn't succeed.");
+		return (NULL);
+	}
 	s = WS_Alloc(ctx->ws, VSB_len(vsb) + 1);
 	if (s == NULL) {
 		VSLb(ctx->vsl, SLT_VCL_Error,

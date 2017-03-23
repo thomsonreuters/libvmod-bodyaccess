@@ -22,3 +22,4 @@ ssize_t http1_iter_req_body(struct req *req, enum req_body_state_e bs,
     void *buf, ssize_t len);
 void VRB_Blob(VRT_CTX, struct vmod_priv *vmod);
 int VRB_Buffer(struct req *req, ssize_t maxsize);
+int IterCopyReqBody(struct req *req, void *priv, void *ptr, size_t l);
